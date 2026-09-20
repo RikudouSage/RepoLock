@@ -85,6 +85,11 @@ func (receiver *defaultRepository[TEntity]) Find(ctx context.Context, options ..
 		result = append(result, &item)
 	}
 
+	if err := rows.Err(); err != nil {
+		var zero TEntity
+		return nil, fmt.Errorf("failed iterating entities of type %T: %w", zero, err)
+	}
+
 	return result, nil
 }
 
