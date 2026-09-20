@@ -17,6 +17,7 @@ type DefaultRepository[TEntity any] interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*TEntity, error)
 	Find(ctx context.Context, options ...FindOption) ([]*TEntity, error)
 	Create(ctx context.Context, entity *TEntity) error
+	Delete(ctx context.Context, options ...FindOption) error
 }
 
 type defaultRepository[TEntity any] struct {
@@ -65,7 +66,7 @@ func (receiver *defaultRepository[TEntity]) Find(ctx context.Context, options ..
 	}
 
 	result := make([]*TEntity, 0)
-	query, bind := receiver.createQuery(options)
+	query, bind := receiver.createQuery("select * from", options)
 	query = receiver.queryFormatter.FormatQuery(query)
 	rows, err := database.QueryContext(ctx, query, bind...)
 	if err != nil {
@@ -122,6 +123,22 @@ func (receiver *defaultRepository[TEntity]) Create(ctx context.Context, entity *
 	return nil
 }
 
+func (receiver *defaultRepository[TEntity]) Delete(ctx context.Context, options ...FindOption) error {
+	var database db.QueryExecutor = receiver.db
+	if tx := db.GetTransactionFromContext(ctx); tx != nil {
+		database = tx
+	}
+
+	query, bind := receiver.createQuery("delete from", options)
+	query = receiver.queryFormatter.FormatQuery(query)
+
+	if _, err := database.ExecContext(ctx, query, bind...); err != nil {
+		return fmt.Errorf("failed deleting entities: %w", err)
+	}
+
+	return nil
+}
+
 func (receiver *defaultRepository[TEntity]) createID(entity *TEntity) error {
 	ref := reflect.ValueOf(entity).Elem()
 	if ref.Kind() != reflect.Struct {
@@ -142,9 +159,10 @@ func (receiver *defaultRepository[TEntity]) createID(entity *TEntity) error {
 	return nil
 }
 
-func (receiver *defaultRepository[TEntity]) createQuery(options []FindOption) (query string, bind []any) {
+func (receiver *defaultRepository[TEntity]) createQuery(prefix string, options []FindOption) (query string, bind []any) {
 	var queryBuilder strings.Builder
-	queryBuilder.WriteString("select * from ")
+	queryBuilder.WriteString(prefix)
+	queryBuilder.WriteString(" ")
 	queryBuilder.WriteString(receiver.tableName)
 
 	optionsHolder := &findOptions{}

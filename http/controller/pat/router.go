@@ -14,6 +14,7 @@ func Router(
 	router.Use(requiresValidUserMiddleware)
 
 	router.Post("/", controller.CreatePersonalAccessToken)
+	router.Delete("/{id}", controller.DeletePersonalAccessToken)
 
 	return data.AsMountableRouter("pat", router)
 }

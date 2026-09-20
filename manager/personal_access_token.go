@@ -19,7 +19,9 @@ type PATConfig struct {
 
 type PersonalAccessToken interface {
 	CreateForUser(ctx context.Context, user *entity.User, opts *PATConfig) (*entity.PersonalAccessToken, string, error)
-	FindOneByToken(ctx context.Context, authorization string) (*entity.PersonalAccessToken, error)
+	FindByToken(ctx context.Context, authorization string) (*entity.PersonalAccessToken, error)
+	FindByID(ctx context.Context, id uuid.UUID) (*entity.PersonalAccessToken, error)
+	DeleteToken(ctx context.Context, pat *entity.PersonalAccessToken) error
 }
 
 func NewPersonalAccessTokenManager(
@@ -67,7 +69,7 @@ func (receiver *personalAccessToken) CreateForUser(ctx context.Context, user *en
 	return pat, fmt.Sprintf("pat_%s_%s", pat.ID, rawToken), nil
 }
 
-func (receiver *personalAccessToken) FindOneByToken(ctx context.Context, token string) (*entity.PersonalAccessToken, error) {
+func (receiver *personalAccessToken) FindByToken(ctx context.Context, token string) (*entity.PersonalAccessToken, error) {
 	parts := strings.SplitN(token, "_", 3)
 
 	if len(parts) != 3 {
@@ -102,4 +104,12 @@ func (receiver *personalAccessToken) FindOneByToken(ctx context.Context, token s
 	}
 
 	return pat, nil
+}
+
+func (receiver *personalAccessToken) FindByID(ctx context.Context, id uuid.UUID) (*entity.PersonalAccessToken, error) {
+	return receiver.repository.FindByID(ctx, id)
+}
+
+func (receiver *personalAccessToken) DeleteToken(ctx context.Context, pat *entity.PersonalAccessToken) error {
+	return receiver.repository.Delete(ctx, repo.WithWhere("id = ?", pat.ID))
 }
