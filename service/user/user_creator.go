@@ -46,6 +46,7 @@ func (receiver *creator) Create(ctx context.Context, userRegistration dto.UserRe
 	if err != nil {
 		return nil, fmt.Errorf("failed creating transaction: %w", err)
 	}
+	defer tx.Rollback()
 
 	ctx = db.WithTransaction(ctx, tx)
 
