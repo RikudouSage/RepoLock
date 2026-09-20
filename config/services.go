@@ -5,6 +5,7 @@ import (
 	"go.chrastecky.dev/repolock/db/repo"
 	"go.chrastecky.dev/repolock/manager"
 	"go.chrastecky.dev/repolock/service"
+	"go.chrastecky.dev/repolock/service/user"
 	"go.uber.org/fx"
 )
 
@@ -21,8 +22,9 @@ func provideServices() fx.Option {
 		manager.NewUserManager,
 		manager.NewOrganizationManager,
 
-		service.NewUserCreator,
+		user.NewCreator,
 		service.NewPasswordHasher,
 		service.NewPasswordVerifier,
+		service.NewFileSessionStore,
 	)
 }

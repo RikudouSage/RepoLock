@@ -1,4 +1,4 @@
-package service
+package user
 
 import (
 	"context"
@@ -10,20 +10,21 @@ import (
 	"go.chrastecky.dev/repolock/entity"
 	"go.chrastecky.dev/repolock/http/dto"
 	"go.chrastecky.dev/repolock/manager"
+	"go.chrastecky.dev/repolock/service"
 )
 
-type UserCreator interface {
+type Creator interface {
 	Create(ctx context.Context, userRegistration dto.UserRegister) (*entity.User, error)
 }
 
-func NewUserCreator(
+func NewCreator(
 	userManager manager.User,
 	organizationManager manager.Organization,
 	organizationMembershipRepository repo.OrganizationMembershipRepository,
 	transactionCreator db.TransactionCreator,
-	passwordHasher PasswordHasher,
-) UserCreator {
-	return &userCreator{
+	passwordHasher service.PasswordHasher,
+) Creator {
+	return &creator{
 		userManager:                      userManager,
 		organizationManager:              organizationManager,
 		organizationMembershipRepository: organizationMembershipRepository,
@@ -32,15 +33,15 @@ func NewUserCreator(
 	}
 }
 
-type userCreator struct {
+type creator struct {
 	userManager                      manager.User
 	organizationManager              manager.Organization
 	organizationMembershipRepository repo.OrganizationMembershipRepository
 	transactionCreator               db.TransactionCreator
-	passwordHasher                   PasswordHasher
+	passwordHasher                   service.PasswordHasher
 }
 
-func (receiver *userCreator) Create(ctx context.Context, userRegistration dto.UserRegister) (*entity.User, error) {
+func (receiver *creator) Create(ctx context.Context, userRegistration dto.UserRegister) (*entity.User, error) {
 	tx, err := receiver.transactionCreator.Create()
 	if err != nil {
 		return nil, fmt.Errorf("failed creating transaction: %w", err)

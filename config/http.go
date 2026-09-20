@@ -8,8 +8,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/alexedwards/scs/v2"
 	"go.chrastecky.dev/repolock/config/data"
 	"go.chrastecky.dev/repolock/http/response"
+	"go.chrastecky.dev/repolock/service"
 
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/fx"
@@ -18,8 +20,9 @@ import (
 type routerDi struct {
 	fx.In
 
-	Middlewares []orderedMiddleware     `group:"middleware"`
-	Routers     []*data.MountableRouter `group:"routers"`
+	SessionManager *scs.SessionManager
+	Middlewares    []orderedMiddleware     `group:"middleware"`
+	Routers        []*data.MountableRouter `group:"routers"`
 }
 
 func newChiRouter(in routerDi) *chi.Mux {
@@ -33,6 +36,7 @@ func newChiRouter(in routerDi) *chi.Mux {
 	})
 
 	router := chi.NewRouter()
+	router.Use(in.SessionManager.LoadAndSave)
 
 	for _, middlewareInstance := range allMiddlewareWrappers {
 		router.Use(middlewareInstance.Middleware)
@@ -71,11 +75,23 @@ func startHttpServer(lifecycle fx.Lifecycle, cfg *data.GlobalConfig, router *chi
 	})
 }
 
+func newSessionManager(
+	store service.FileSessionStore,
+) *scs.SessionManager {
+	sessionManager := scs.New()
+	sessionManager.Lifetime = 365 * 24 * time.Hour
+	sessionManager.IdleTimeout = 24 * time.Hour
+	sessionManager.Store = store
+
+	return sessionManager
+}
+
 func provideHttp() fx.Option {
 	return fx.Module(
 		"http",
 		fx.Provide(response.NewWriter),
 		fx.Provide(newChiRouter),
+		fx.Provide(newSessionManager),
 		fx.Invoke(startHttpServer),
 	)
 }

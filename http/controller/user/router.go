@@ -14,6 +14,9 @@ func Router(
 	if config.RegistrationsEnabled {
 		router.Post("/register", controller.Register)
 	}
+	if config.PasswordLoginEnabled {
+		router.Post("/login/password", controller.UserPasswordLogin)
+	}
 
 	return data.AsMountableRouter("users", router)
 }

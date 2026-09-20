@@ -3,6 +3,7 @@ module go.chrastecky.dev/repolock
 go 1.26.0
 
 require (
+	github.com/alexedwards/scs/v2 v2.9.0
 	github.com/go-chi/chi/v5 v5.3.1
 	github.com/go-co-op/gocron/v2 v2.22.0
 	github.com/google/uuid v1.6.0

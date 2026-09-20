@@ -78,5 +78,6 @@ func provideMiddlewares() fx.Option {
 		provideMiddlewareProvider(appMiddleware.Logger),
 		provideMiddleware(middleware.Compress(5)),
 		provideMiddleware(middleware.GetHead),
+		provideMiddlewareProvider(appMiddleware.SessionAuthMiddleware),
 	)
 }

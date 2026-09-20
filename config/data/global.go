@@ -1,6 +1,10 @@
 package data
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+	"strings"
+)
 
 type DatabaseType string
 
@@ -20,7 +24,9 @@ type GlobalConfig struct {
 	Debug    bool   `default:"false"`
 
 	// config
-	RegistrationsEnabled bool `default:"true" split_words:"true"`
+	RegistrationsEnabled bool   `default:"true" split_words:"true"`
+	PasswordLoginEnabled bool   `default:"true" split_words:"true"`
+	SessionStorePath     string `default:"$HOME/.config/repo-lock/sessions" split_words:"true"`
 
 	// db
 	DatabaseType     DatabaseType `default:"sqlite" split_words:"true"`
@@ -40,6 +46,18 @@ func (receiver *GlobalConfig) Validate() error {
 
 	if receiver.DatabaseType == DatabaseTypePostgres && (receiver.DatabaseHost == "" || receiver.DatabaseName == "") {
 		return fmt.Errorf("database host or name is empty for postgres mode")
+	}
+
+	return nil
+}
+
+func (receiver *GlobalConfig) Normalize() error {
+	if strings.Contains(receiver.SessionStorePath, "$HOME") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return fmt.Errorf("the session store path contains $HOME, but we could not resolve the user's home dir: %w", err)
+		}
+		receiver.SessionStorePath = strings.ReplaceAll(receiver.SessionStorePath, "$HOME", home)
 	}
 
 	return nil
