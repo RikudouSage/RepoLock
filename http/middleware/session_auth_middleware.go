@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/alexedwards/scs/v2"
+	"github.com/google/uuid"
 	apphttp "go.chrastecky.dev/repolock/http"
 )
 
@@ -15,7 +16,7 @@ func SessionAuthMiddleware(
 			userID := sessionManager.GetString(request.Context(), apphttp.SessionKeyUserID)
 			if userID != "" {
 				request = request.WithContext(
-					apphttp.WithUserID(request.Context(), userID),
+					apphttp.WithUserID(request.Context(), uuid.MustParse(userID)),
 				)
 			}
 

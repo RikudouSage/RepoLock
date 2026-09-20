@@ -1,6 +1,7 @@
 package config
 
 import (
+	"go.chrastecky.dev/repolock/http/controller/pat"
 	"go.chrastecky.dev/repolock/http/controller/user"
 	"go.uber.org/fx"
 )
@@ -15,11 +16,13 @@ func asRouter(provider any) any {
 func provideControllers() fx.Option {
 	return fx.Provide(
 		user.NewController,
+		pat.NewController,
 	)
 }
 
 func provideRoutes() fx.Option {
 	return fx.Provide(
 		asRouter(user.Router),
+		asRouter(pat.Router),
 	)
 }

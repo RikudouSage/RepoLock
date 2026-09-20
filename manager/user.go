@@ -2,9 +2,11 @@ package manager
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	"go.chrastecky.dev/repolock/db"
 	"go.chrastecky.dev/repolock/db/repo"
 	"go.chrastecky.dev/repolock/entity"
@@ -21,6 +23,7 @@ var ErrInvalidPassword = errors.New("invalid password")
 type User interface {
 	Create(ctx context.Context, user *entity.User) error
 	FindByUsernameAndPassword(ctx context.Context, username string, password string) (*entity.User, error)
+	FindByID(ctx context.Context, userID uuid.UUID) (*entity.User, error)
 }
 
 func NewUserManager(
@@ -79,4 +82,16 @@ func (receiver *user) FindByUsernameAndPassword(ctx context.Context, username st
 	}
 
 	return userEntities[0], nil
+}
+
+func (receiver *user) FindByID(ctx context.Context, userID uuid.UUID) (*entity.User, error) {
+	userEntity, err := receiver.userRepository.FindByID(ctx, userID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrUserNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed finding user by id: %w", err)
+	}
+
+	return userEntity, nil
 }
