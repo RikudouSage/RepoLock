@@ -25,6 +25,7 @@ CREATE TABLE organization_memberships (
     organization_id BLOB(16) NOT NULL,
     user_id BLOB(16) NOT NULL,
     permission TEXT NOT NULL CHECK (permission IN ('user', 'admin')),
+    approved BOOLEAN NOT NULL,
     FOREIGN KEY (organization_id) REFERENCES organizations (id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     UNIQUE (organization_id, user_id)

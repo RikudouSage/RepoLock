@@ -1,18 +1,22 @@
 package repo
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 	"go.chrastecky.dev/repolock/db"
 )
 
 type DefaultRepository[TEntity any] interface {
-	FindByID(id uuid.UUID) (*TEntity, error)
-	Find(options ...FindOption) ([]*TEntity, error)
+	FindByID(ctx context.Context, id uuid.UUID) (*TEntity, error)
+	Find(ctx context.Context, options ...FindOption) ([]*TEntity, error)
+	Create(ctx context.Context, entity *TEntity) error
 }
 
 type defaultRepository[TEntity any] struct {
@@ -36,8 +40,9 @@ func newDefaultRepository[TEntity any](
 	}
 }
 
-func (receiver *defaultRepository[TEntity]) FindByID(id uuid.UUID) (*TEntity, error) {
+func (receiver *defaultRepository[TEntity]) FindByID(ctx context.Context, id uuid.UUID) (*TEntity, error) {
 	result, err := receiver.Find(
+		ctx,
 		WithWhere("id = ?", id),
 		WithLimit(1),
 	)
@@ -53,11 +58,16 @@ func (receiver *defaultRepository[TEntity]) FindByID(id uuid.UUID) (*TEntity, er
 	return result[0], nil
 }
 
-func (receiver *defaultRepository[TEntity]) Find(options ...FindOption) ([]*TEntity, error) {
+func (receiver *defaultRepository[TEntity]) Find(ctx context.Context, options ...FindOption) ([]*TEntity, error) {
+	var database db.QueryIssuer = receiver.db
+	if tx := db.GetTransactionFromContext(ctx); tx != nil {
+		database = tx
+	}
+
 	result := make([]*TEntity, 0)
 	query, bind := receiver.createQuery(options)
 	query = receiver.queryFormatter.FormatQuery(query)
-	rows, err := receiver.db.Query(query, bind...)
+	rows, err := database.QueryContext(ctx, query, bind...)
 	if err != nil {
 		var zero TEntity
 		return nil, fmt.Errorf("failed fetching entities of type %T: %w", zero, err)
@@ -66,7 +76,7 @@ func (receiver *defaultRepository[TEntity]) Find(options ...FindOption) ([]*TEnt
 
 	for rows.Next() {
 		var item TEntity
-		err = receiver.mapper.Map(rows, &item)
+		err = receiver.mapper.MapOntoStruct(rows, &item)
 		if err != nil {
 			return nil, fmt.Errorf("failed mapping entity of type %T: %w", item, err)
 		}
@@ -75,6 +85,61 @@ func (receiver *defaultRepository[TEntity]) Find(options ...FindOption) ([]*TEnt
 	}
 
 	return result, nil
+}
+
+func (receiver *defaultRepository[TEntity]) Create(ctx context.Context, entity *TEntity) error {
+	var database db.QueryExecutor = receiver.db
+	if tx := db.GetTransactionFromContext(ctx); tx != nil {
+		database = tx
+	}
+
+	if err := receiver.createID(entity); err != nil {
+		return fmt.Errorf("failed creating a new ID for entity: %w", err)
+	}
+
+	var queryBuilder strings.Builder
+	queryBuilder.WriteString("insert into ")
+	queryBuilder.WriteString(receiver.tableName)
+	queryBuilder.WriteString(" (")
+
+	columns, values, err := receiver.mapper.MapFromStruct(entity)
+	if err != nil {
+		return fmt.Errorf("failed mapping entity of type %T: %w", entity, err)
+	}
+
+	queryBuilder.WriteString(strings.Join(columns, ", "))
+	queryBuilder.WriteString(") values (")
+	queryBuilder.WriteString(strings.Join(lo.RepeatBy(len(values), func(_ int) string {
+		return "?"
+	}), ", "))
+	queryBuilder.WriteString(")")
+
+	query := receiver.queryFormatter.FormatQuery(queryBuilder.String())
+	if _, err = database.ExecContext(ctx, query, values...); err != nil {
+		return fmt.Errorf("failed persisting entity %T: %w", entity, err)
+	}
+
+	return nil
+}
+
+func (receiver *defaultRepository[TEntity]) createID(entity *TEntity) error {
+	ref := reflect.ValueOf(entity).Elem()
+	if ref.Kind() != reflect.Struct {
+		return fmt.Errorf("entity is not a struct type: %T", entity)
+	}
+
+	field, ok := ref.Type().FieldByName("ID")
+	if !ok {
+		return fmt.Errorf("entity %T has no field 'ID'", entity)
+	}
+
+	if !field.Type.AssignableTo(reflect.TypeFor[uuid.UUID]()) {
+		return fmt.Errorf("entity %T has an invalid type for its ID: %T", entity, ref.FieldByName(field.Name).Interface())
+	}
+
+	ref.FieldByName(field.Name).Set(reflect.ValueOf(lo.Must(uuid.NewV7())))
+
+	return nil
 }
 
 func (receiver *defaultRepository[TEntity]) createQuery(options []FindOption) (query string, bind []any) {

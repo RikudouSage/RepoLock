@@ -1,6 +1,9 @@
 package config
 
-import "go.uber.org/fx"
+import (
+	"go.chrastecky.dev/repolock/http/controller/user"
+	"go.uber.org/fx"
+)
 
 func asRouter(provider any) any {
 	return fx.Annotate(
@@ -10,9 +13,13 @@ func asRouter(provider any) any {
 }
 
 func provideControllers() fx.Option {
-	return fx.Provide()
+	return fx.Provide(
+		user.NewController,
+	)
 }
 
 func provideRoutes() fx.Option {
-	return fx.Provide()
+	return fx.Provide(
+		asRouter(user.Router),
+	)
 }

@@ -19,6 +19,9 @@ type GlobalConfig struct {
 	Timezone string `default:"UTC"`
 	Debug    bool   `default:"false"`
 
+	// config
+	RegistrationsEnabled bool `default:"true" split_words:"true"`
+
 	// db
 	DatabaseType     DatabaseType `default:"sqlite" split_words:"true"`
 	DatabasePath     string       `default:"./data.sqlite3" split_words:"true"`

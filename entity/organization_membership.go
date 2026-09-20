@@ -8,4 +8,5 @@ type OrganizationMembership struct {
 	UserID         uuid.UUID
 
 	Permission Permission
+	Approved   bool
 }

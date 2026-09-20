@@ -14,7 +14,8 @@ type Scannable interface {
 }
 
 type Mapper interface {
-	Map(rows Scannable, result any) error
+	MapOntoStruct(rows Scannable, result any) error
+	MapFromStruct(item any) (columns []string, values []any, err error)
 }
 
 func NewMapper() Mapper {
@@ -24,7 +25,7 @@ func NewMapper() Mapper {
 type mapper struct {
 }
 
-func (receiver *mapper) Map(scannable Scannable, result any) error {
+func (receiver *mapper) MapOntoStruct(scannable Scannable, result any) error {
 	ref := reflect.ValueOf(result)
 	if ref.Kind() != reflect.Pointer {
 		return fmt.Errorf("result must be a pointer")
@@ -59,4 +60,25 @@ func (receiver *mapper) Map(scannable Scannable, result any) error {
 	}
 
 	return nil
+}
+
+func (receiver *mapper) MapFromStruct(item any) (columns []string, values []any, err error) {
+	ref := reflect.ValueOf(item)
+	if ref.Kind() == reflect.Pointer {
+		ref = ref.Elem()
+	}
+
+	if ref.Kind() != reflect.Struct {
+		err = fmt.Errorf("result must be a struct, %T given", item)
+		return
+	}
+
+	columns = make([]string, ref.NumField())
+	values = make([]any, ref.NumField())
+	for i := range ref.NumField() {
+		columns[i] = strcase.ToSnake(ref.Type().Field(i).Name)
+		values[i] = ref.Field(i).Interface()
+	}
+
+	return
 }

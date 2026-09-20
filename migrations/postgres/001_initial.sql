@@ -24,6 +24,7 @@ CREATE TABLE organization_memberships (
     organization_id UUID NOT NULL REFERENCES organizations (id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     permission TEXT NOT NULL CHECK (permission IN ('user', 'admin')),
+    approved BOOLEAN NOT NULL,
     UNIQUE (organization_id, user_id)
 );
 
