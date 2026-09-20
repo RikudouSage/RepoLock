@@ -12,5 +12,6 @@ func Providers() fx.Option {
 		provideRoutes(),
 		provideControllers(),
 		provideCron(),
+		provideDatabase(),
 	)
 }
