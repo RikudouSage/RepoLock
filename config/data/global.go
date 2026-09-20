@@ -35,7 +35,7 @@ func (receiver *GlobalConfig) Validate() error {
 		return fmt.Errorf("database type '%s' is not supported", receiver.DatabaseType)
 	}
 
-	if receiver.DatabaseType == DatabaseTypePostgres && receiver.DatabaseHost == "" || receiver.DatabaseName == "" {
+	if receiver.DatabaseType == DatabaseTypePostgres && (receiver.DatabaseHost == "" || receiver.DatabaseName == "") {
 		return fmt.Errorf("database host or name is empty for postgres mode")
 	}
 

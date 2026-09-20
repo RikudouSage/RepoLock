@@ -6,7 +6,9 @@ require (
 	github.com/go-chi/chi/v5 v5.3.1
 	github.com/go-co-op/gocron/v2 v2.22.0
 	github.com/google/uuid v1.6.0
+	github.com/iancoleman/strcase v0.3.0
 	github.com/jackc/pgx/v5 v5.11.0
+	github.com/jmoiron/sqlx v1.4.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mattn/go-sqlite3 v1.14.52
 	github.com/pressly/goose/v3 v3.28.0
