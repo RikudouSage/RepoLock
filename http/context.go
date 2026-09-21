@@ -29,3 +29,12 @@ func GetUser(ctx context.Context) (user *entity.User, ok bool) {
 	user, ok = ctx.Value(ctxValueUser).(*entity.User)
 	return
 }
+
+func MustGetUser(ctx context.Context) *entity.User {
+	user, ok := GetUser(ctx)
+	if !ok {
+		panic("user not found in context")
+	}
+
+	return user
+}

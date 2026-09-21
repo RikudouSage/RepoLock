@@ -60,10 +60,7 @@ func (receiver *defaultRepository[TEntity]) FindByID(ctx context.Context, id uui
 }
 
 func (receiver *defaultRepository[TEntity]) Find(ctx context.Context, options ...FindOption) ([]*TEntity, error) {
-	var database db.QueryIssuer = receiver.db
-	if tx := db.GetTransactionFromContext(ctx); tx != nil {
-		database = tx
-	}
+	database := receiver.getQueryIssuer(ctx)
 
 	result := make([]*TEntity, 0)
 	query, bind := receiver.createQuery("select * from", options)
@@ -94,10 +91,7 @@ func (receiver *defaultRepository[TEntity]) Find(ctx context.Context, options ..
 }
 
 func (receiver *defaultRepository[TEntity]) Create(ctx context.Context, entity *TEntity) error {
-	var database db.QueryExecutor = receiver.db
-	if tx := db.GetTransactionFromContext(ctx); tx != nil {
-		database = tx
-	}
+	database := receiver.getQueryExecutor(ctx)
 
 	if err := receiver.createID(entity); err != nil {
 		return fmt.Errorf("failed creating a new ID for entity: %w", err)
@@ -129,10 +123,7 @@ func (receiver *defaultRepository[TEntity]) Create(ctx context.Context, entity *
 }
 
 func (receiver *defaultRepository[TEntity]) Delete(ctx context.Context, options ...FindOption) error {
-	var database db.QueryExecutor = receiver.db
-	if tx := db.GetTransactionFromContext(ctx); tx != nil {
-		database = tx
-	}
+	database := receiver.getQueryExecutor(ctx)
 
 	query, bind := receiver.createQuery("delete from", options)
 	query = receiver.queryFormatter.FormatQuery(query)
@@ -193,4 +184,22 @@ func (receiver *defaultRepository[TEntity]) createQuery(prefix string, options [
 	}
 
 	return queryBuilder.String(), optionsHolder.bindValues
+}
+
+func (receiver *defaultRepository[TEntity]) getQueryExecutor(ctx context.Context) db.QueryExecutor {
+	var result db.QueryExecutor = receiver.db
+	if tx := db.GetTransactionFromContext(ctx); tx != nil {
+		result = tx
+	}
+
+	return result
+}
+
+func (receiver *defaultRepository[TEntity]) getQueryIssuer(ctx context.Context) db.QueryIssuer {
+	var result db.QueryIssuer = receiver.db
+	if tx := db.GetTransactionFromContext(ctx); tx != nil {
+		result = tx
+	}
+
+	return result
 }

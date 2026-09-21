@@ -3,9 +3,9 @@ package entity
 import "github.com/google/uuid"
 
 type Repository struct {
-	ID             uuid.UUID
-	OrganizationID uuid.UUID
+	ID             uuid.UUID `json:"id"`
+	OrganizationID uuid.UUID `json:"-"`
 
-	Name       string
-	Identifier string
+	Name       string `json:"name"`
+	Identifier string `json:"identifier"`
 }

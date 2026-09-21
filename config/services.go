@@ -19,15 +19,19 @@ func provideServices() fx.Option {
 		repo.NewOrganizationRepository,
 		repo.NewOrganizationMembershipRepository,
 		repo.NewPersonalAccessTokenRepository,
+		repo.NewRepositoryRepository,
 
 		manager.NewUserManager,
 		manager.NewOrganizationManager,
 		manager.NewPersonalAccessTokenManager,
+		manager.NewRepositoryManager,
+		manager.NewAccessManager,
 
 		user.NewCreator,
 		service.NewPasswordHasher,
 		service.NewPasswordVerifier,
 		service.NewFileSessionStore,
 		service.NewRandomStringGenerator,
+		service.NewRepositoryURLNormalizer,
 	)
 }

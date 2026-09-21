@@ -1,6 +1,6 @@
 module go.chrastecky.dev/repolock
 
-go 1.26.0
+go 1.27.0
 
 require (
 	github.com/alexedwards/scs/v2 v2.9.0
