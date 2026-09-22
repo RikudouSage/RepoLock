@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -18,6 +19,7 @@ type DefaultRepository[TEntity any] interface {
 	Find(ctx context.Context, options ...FindOption) ([]*TEntity, error)
 	Create(ctx context.Context, entity *TEntity) error
 	Delete(ctx context.Context, options ...FindOption) error
+	Update(ctx context.Context, entity *TEntity) error
 }
 
 type defaultRepository[TEntity any] struct {
@@ -133,6 +135,60 @@ func (receiver *defaultRepository[TEntity]) Delete(ctx context.Context, options 
 	}
 
 	return nil
+}
+
+func (receiver *defaultRepository[TEntity]) Update(ctx context.Context, entity *TEntity) error {
+	database := receiver.getQueryExecutor(ctx)
+
+	var queryBuilder strings.Builder
+	queryBuilder.WriteString("update ")
+	queryBuilder.WriteString(receiver.tableName)
+	queryBuilder.WriteString(" set ")
+
+	columns, values, err := receiver.mapper.MapFromStruct(entity)
+	if err != nil {
+		return fmt.Errorf("failed mapping entity of type %T: %w", entity, err)
+	}
+
+	idColumnIndex := slices.Index(columns, "id")
+	if idColumnIndex != -1 {
+		columns = lo.DropByIndex(columns, idColumnIndex)
+		values = lo.DropByIndex(values, idColumnIndex)
+	}
+
+	parts := make([]string, len(columns))
+	for i, column := range columns {
+		parts[i] = fmt.Sprintf("%s = ?", column)
+	}
+	queryBuilder.WriteString(strings.Join(parts, ", "))
+	queryBuilder.WriteString(" where id = ?")
+
+	values = append(values, lo.Must(receiver.getID(entity)))
+
+	query := receiver.queryFormatter.FormatQuery(queryBuilder.String())
+	if _, err = database.ExecContext(ctx, query, values...); err != nil {
+		return fmt.Errorf("failed updating entity %T: %w", entity, err)
+	}
+
+	return nil
+}
+
+func (receiver *defaultRepository[TEntity]) getID(entity *TEntity) (uuid.UUID, error) {
+	ref := reflect.ValueOf(entity).Elem()
+	if ref.Kind() != reflect.Struct {
+		return uuid.Nil, fmt.Errorf("entity is not a struct type: %T", entity)
+	}
+
+	field, ok := ref.Type().FieldByName("ID")
+	if !ok {
+		return uuid.Nil, fmt.Errorf("entity %T has no field 'ID'", entity)
+	}
+
+	if !field.Type.AssignableTo(reflect.TypeFor[uuid.UUID]()) {
+		return uuid.Nil, fmt.Errorf("entity %T has an invalid type for its ID: %T", entity, ref.FieldByName(field.Name).Interface())
+	}
+
+	return ref.FieldByName(field.Name).Interface().(uuid.UUID), nil
 }
 
 func (receiver *defaultRepository[TEntity]) createID(entity *TEntity) error {

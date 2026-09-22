@@ -19,6 +19,8 @@ type Repository interface {
 	GetReposForUser(ctx context.Context, user *entity.User) ([]*entity.Repository, error)
 	GetRepoForUser(ctx context.Context, user *entity.User, repoID uuid.UUID) (*entity.Repository, error)
 	CreateRepository(ctx context.Context, id uuid.UUID, url string, name string) (*entity.Repository, error)
+	DeleteRepository(ctx context.Context, id uuid.UUID) error
+	UpdateRepository(ctx context.Context, repository *entity.Repository) error
 }
 
 func NewRepositoryManager(
@@ -86,4 +88,16 @@ func (receiver *repository) CreateRepository(ctx context.Context, organizationID
 	}
 
 	return repoEntity, nil
+}
+
+func (receiver *repository) DeleteRepository(ctx context.Context, id uuid.UUID) error {
+	return receiver.repository.Delete(ctx, repo.WithWhere("id = ?", id))
+}
+
+func (receiver *repository) UpdateRepository(ctx context.Context, repository *entity.Repository) error {
+	if repository.Name == "" {
+		repository.Name = repository.Identifier
+	}
+
+	return receiver.repository.Update(ctx, repository)
 }

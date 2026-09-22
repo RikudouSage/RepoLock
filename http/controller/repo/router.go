@@ -16,8 +16,8 @@ func Router(
 	router.Get("/", controller.ListRepositories)
 	router.Get("/{id}", controller.GetRepository)
 	router.Post("/", controller.CreateRepository)
-	//router.Patch("/{id}", controller.UpdateRepository)
-	//router.Delete("/{id}", controller.DeleteRepository)
+	router.Patch("/{id}", controller.UpdateRepository)
+	router.Delete("/{id}", controller.DeleteRepository)
 
 	return data.AsMountableRouter("repositories", router)
 }

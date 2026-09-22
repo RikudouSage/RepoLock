@@ -36,7 +36,7 @@ func (receiver *Controller) CreateRepository(writer http.ResponseWriter, request
 
 	if !hasAccess {
 		receiver.writer.WriteErrorResponse(appErrors.NewUserFacingErrorWithStatusCode(
-			"you don't have write access to this orgainzation",
+			"you don't have write access to this organization",
 			http.StatusForbidden,
 		), writer)
 		return
