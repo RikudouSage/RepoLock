@@ -109,13 +109,6 @@ func (receiver *personalAccessToken) FindByToken(ctx context.Context, token stri
 	}
 
 	if pat.ExpiresAt != nil && receiver.now().After(*pat.ExpiresAt) {
-		go func() {
-			deleteCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-			defer cancel()
-
-			_ = receiver.DeleteToken(deleteCtx, pat)
-		}()
-
 		return nil, ErrPATNotFound
 	}
 
