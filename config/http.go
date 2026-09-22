@@ -8,7 +8,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/alexedwards/scs/redisstore"
 	"github.com/alexedwards/scs/v2"
+	"github.com/gomodule/redigo/redis"
 	"go.chrastecky.dev/repolock/config/data"
 	"go.chrastecky.dev/repolock/http/response"
 	"go.chrastecky.dev/repolock/service"
@@ -77,11 +79,35 @@ func startHttpServer(lifecycle fx.Lifecycle, cfg *data.GlobalConfig, router *chi
 
 func newSessionManager(
 	store service.FileSessionStore,
+	config *data.GlobalConfig,
 ) *scs.SessionManager {
 	sessionManager := scs.New()
 	sessionManager.Lifetime = 365 * 24 * time.Hour
 	sessionManager.IdleTimeout = 24 * time.Hour
-	sessionManager.Store = store
+
+	if config.SessionStorage == data.SessionStorageFile {
+		sessionManager.Store = store
+	} else {
+		pool := &redis.Pool{
+			Dial: func() (redis.Conn, error) {
+				opts := []redis.DialOption{
+					redis.DialDatabase(config.RedisDatabase),
+					redis.DialUseTLS(config.RedisTLS),
+				}
+
+				if config.RedisPassword != "" {
+					redis.DialPassword(config.RedisPassword)
+				}
+
+				return redis.Dial(
+					"tcp",
+					config.RedisHost+":"+strconv.FormatUint(uint64(config.RedisPort), 10),
+					opts...,
+				)
+			},
+		}
+		sessionManager.Store = redisstore.New(pool)
+	}
 
 	return sessionManager
 }

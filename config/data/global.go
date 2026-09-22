@@ -7,14 +7,22 @@ import (
 )
 
 type DatabaseType string
+type SessionStorage string
 
 func (receiver DatabaseType) IsValid() bool {
 	return receiver == DatabaseTypeSQLite || receiver == DatabaseTypePostgres
 }
 
+func (receiver SessionStorage) IsValid() bool {
+	return receiver == SessionStorageFile || receiver == SessionStorageRedis
+}
+
 const (
 	DatabaseTypeSQLite   DatabaseType = "sqlite"
 	DatabaseTypePostgres DatabaseType = "postgres"
+
+	SessionStorageFile  SessionStorage = "file"
+	SessionStorageRedis SessionStorage = "redis"
 )
 
 type GlobalConfig struct {
@@ -24,11 +32,19 @@ type GlobalConfig struct {
 	Debug    bool   `default:"false"`
 
 	// config
-	Secret               string `required:"true" split_words:"true"`
-	RegistrationsEnabled bool   `default:"true" split_words:"true"`
-	PasswordLoginEnabled bool   `default:"true" split_words:"true"`
-	AnyoneCanRequestJoin bool   `default:"true" split_words:"true"`
-	SessionStorePath     string `default:"$HOME/.config/repo-lock/sessions" split_words:"true"`
+	Secret               string         `required:"true" split_words:"true"`
+	RegistrationsEnabled bool           `default:"true" split_words:"true"`
+	PasswordLoginEnabled bool           `default:"true" split_words:"true"`
+	AnyoneCanRequestJoin bool           `default:"true" split_words:"true"`
+	SessionStorePath     string         `default:"$HOME/.config/repo-lock/sessions" split_words:"true"`
+	SessionStorage       SessionStorage `default:"file" split_words:"true"`
+
+	// redis
+	RedisHost     string `default:"localhost" split_words:"true"`
+	RedisPort     uint16 `default:"6379" split_words:"true"`
+	RedisPassword string `split_words:"true"`
+	RedisDatabase int    `default:"0" split_words:"true"`
+	RedisTLS      bool   `default:"false" split_words:"true"`
 
 	// db
 	DatabaseType     DatabaseType `default:"sqlite" split_words:"true"`
