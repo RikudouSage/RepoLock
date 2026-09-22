@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/gomodule/redigo/redis"
 	"github.com/pressly/goose/v3"
 	"go.chrastecky.dev/repolock/config/data"
 	"go.chrastecky.dev/repolock/migrations/postgres"
@@ -105,9 +106,33 @@ func createDatabase(
 	return
 }
 
+func newRedisPool(config *data.GlobalConfig) *redis.Pool {
+	return &redis.Pool{
+		Dial: func() (redis.Conn, error) {
+			opts := []redis.DialOption{
+				redis.DialDatabase(config.RedisDatabase),
+				redis.DialUseTLS(config.RedisTLS),
+			}
+
+			if config.RedisPassword != "" {
+				redis.DialPassword(config.RedisPassword)
+			}
+
+			return redis.Dial(
+				"tcp",
+				config.RedisHost+":"+strconv.FormatUint(uint64(config.RedisPort), 10),
+				opts...,
+			)
+		},
+	}
+}
+
 func provideDatabase() fx.Option {
 	return fx.Module(
-		"database",
-		fx.Provide(createDatabase),
+		"infra",
+		fx.Provide(
+			createDatabase,
+			newRedisPool,
+		),
 	)
 }

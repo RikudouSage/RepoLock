@@ -80,6 +80,7 @@ func startHttpServer(lifecycle fx.Lifecycle, cfg *data.GlobalConfig, router *chi
 func newSessionManager(
 	store service.FileSessionStore,
 	config *data.GlobalConfig,
+	redisPool *redis.Pool,
 ) *scs.SessionManager {
 	sessionManager := scs.New()
 	sessionManager.Lifetime = 365 * 24 * time.Hour
@@ -88,25 +89,7 @@ func newSessionManager(
 	if config.SessionStorage == data.SessionStorageFile {
 		sessionManager.Store = store
 	} else {
-		pool := &redis.Pool{
-			Dial: func() (redis.Conn, error) {
-				opts := []redis.DialOption{
-					redis.DialDatabase(config.RedisDatabase),
-					redis.DialUseTLS(config.RedisTLS),
-				}
-
-				if config.RedisPassword != "" {
-					redis.DialPassword(config.RedisPassword)
-				}
-
-				return redis.Dial(
-					"tcp",
-					config.RedisHost+":"+strconv.FormatUint(uint64(config.RedisPort), 10),
-					opts...,
-				)
-			},
-		}
-		sessionManager.Store = redisstore.New(pool)
+		sessionManager.Store = redisstore.New(redisPool)
 	}
 
 	return sessionManager
