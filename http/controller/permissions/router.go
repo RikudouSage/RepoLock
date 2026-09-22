@@ -17,7 +17,7 @@ func Router(
 		router.Get("/{orgID}", controller.GetOrganizationPermissions)
 		router.Post("/{orgID}", controller.CreateOrganizationPermission)
 		//router.Get("/{orgID}/{userID}", controller.GetUserOrganizationPermission)
-		//router.Delete("/{orgID}/{userID}", controller.DeleteUserOrganizationPermission)
+		router.Delete("/{orgID}/{userID}", controller.DeleteUserOrganizationPermission)
 		//router.Patch("/{orgID}/{userID}", controller.UpdateUserOrganizationPermission)
 	})
 
