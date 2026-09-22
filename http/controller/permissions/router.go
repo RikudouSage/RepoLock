@@ -18,7 +18,7 @@ func Router(
 		router.Post("/{orgID}", controller.CreateOrganizationPermission)
 		router.Get("/{orgID}/{userID}", controller.GetUserOrganizationPermission)
 		router.Delete("/{orgID}/{userID}", controller.DeleteUserOrganizationPermission)
-		//router.Patch("/{orgID}/{userID}", controller.UpdateUserOrganizationPermission)
+		router.Patch("/{orgID}/{userID}", controller.UpdateUserOrganizationPermission)
 	})
 
 	router.Route("/repo", func(router chi.Router) {

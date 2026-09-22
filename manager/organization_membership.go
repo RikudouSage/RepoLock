@@ -18,6 +18,7 @@ type OrganizationMembership interface {
 	GetMemberships(ctx context.Context, org *entity.Organization) ([]*entity.OrganizationMembership, error)
 	GetUserMembership(ctx context.Context, orgID uuid.UUID, userID uuid.UUID) (*entity.OrganizationMembership, error)
 	RemoveMembership(ctx context.Context, membership *entity.OrganizationMembership) error
+	UpdateMembership(ctx context.Context, membership *entity.OrganizationMembership) error
 }
 
 func NewOrganizationMembershipManager(
@@ -68,4 +69,8 @@ func (receiver *organizationMembership) GetUserMembership(ctx context.Context, o
 
 func (receiver *organizationMembership) RemoveMembership(ctx context.Context, membership *entity.OrganizationMembership) error {
 	return receiver.repository.Delete(ctx, repo.WithWhere("id = ?", membership.ID))
+}
+
+func (receiver *organizationMembership) UpdateMembership(ctx context.Context, membership *entity.OrganizationMembership) error {
+	return receiver.repository.Update(ctx, membership)
 }
