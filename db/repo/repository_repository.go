@@ -40,6 +40,7 @@ func (receiver *repositoryRepository) FindForUser(ctx context.Context, user *ent
 
 	options = append([]FindOption{
 		WithWhere("om.user_id = ?", user.ID),
+		WithSkipAutoTableName(true),
 	}, options...)
 
 	query := `select r.*
@@ -57,11 +58,11 @@ func (receiver *repositoryRepository) FindForUser(ctx context.Context, user *ent
 
 	result := make([]*entity.Repository, 0)
 	for rows.Next() {
-		var item *entity.Repository
-		if err = receiver.mapper.MapOntoStruct(rows, item); err != nil {
+		var item entity.Repository
+		if err = receiver.mapper.MapOntoStruct(rows, &item); err != nil {
 			return nil, fmt.Errorf("failed mapping repository for user %s: %w", user.ID, err)
 		}
-		result = append(result, item)
+		result = append(result, &item)
 	}
 
 	return result, nil

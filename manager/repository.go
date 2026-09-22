@@ -6,12 +6,14 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"go.chrastecky.dev/repolock/db"
 	"go.chrastecky.dev/repolock/db/repo"
 	"go.chrastecky.dev/repolock/entity"
 	"go.chrastecky.dev/repolock/service"
 )
 
 var ErrRepositoryNotFound = errors.New("repository not found")
+var ErrRepositoryAlreadyExists = errors.New("repository already exists")
 
 type Repository interface {
 	GetReposForUser(ctx context.Context, user *entity.User) ([]*entity.Repository, error)
@@ -76,6 +78,10 @@ func (receiver *repository) CreateRepository(ctx context.Context, organizationID
 	}
 
 	if err = receiver.repository.Create(ctx, repoEntity); err != nil {
+		if db.IsDuplicateError(err) {
+			return nil, fmt.Errorf("%w: %w", ErrRepositoryAlreadyExists, err)
+		}
+
 		return nil, fmt.Errorf("failed creating repository: %w", err)
 	}
 

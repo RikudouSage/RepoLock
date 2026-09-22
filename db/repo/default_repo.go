@@ -156,14 +156,16 @@ func (receiver *defaultRepository[TEntity]) createID(entity *TEntity) error {
 }
 
 func (receiver *defaultRepository[TEntity]) createQuery(prefix string, options []FindOption) (query string, bind []any) {
-	var queryBuilder strings.Builder
-	queryBuilder.WriteString(prefix)
-	queryBuilder.WriteString(" ")
-	queryBuilder.WriteString(receiver.tableName)
-
 	optionsHolder := &findOptions{}
 	for _, option := range options {
 		option(optionsHolder)
+	}
+
+	var queryBuilder strings.Builder
+	queryBuilder.WriteString(prefix)
+	queryBuilder.WriteString(" ")
+	if !optionsHolder.skipAutoTableName {
+		queryBuilder.WriteString(receiver.tableName)
 	}
 
 	if len(optionsHolder.where) != 0 {

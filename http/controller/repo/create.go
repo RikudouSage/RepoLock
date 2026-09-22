@@ -1,9 +1,10 @@
 package repo
 
 import (
+	"errors"
 	"net/http"
 
-	"go.chrastecky.dev/repolock/errors"
+	appErrors "go.chrastecky.dev/repolock/errors"
 	apphttp "go.chrastecky.dev/repolock/http"
 	"go.chrastecky.dev/repolock/http/dto"
 	"go.chrastecky.dev/repolock/manager"
@@ -18,7 +19,7 @@ func (receiver *Controller) CreateRepository(writer http.ResponseWriter, request
 	}
 
 	if err = body.Validate(); err != nil {
-		receiver.writer.WriteErrorResponse(errors.NewUserFacingError(err.Error()), writer)
+		receiver.writer.WriteErrorResponse(appErrors.NewUserFacingError(err.Error()), writer)
 		return
 	}
 
@@ -34,7 +35,7 @@ func (receiver *Controller) CreateRepository(writer http.ResponseWriter, request
 	}
 
 	if !hasAccess {
-		receiver.writer.WriteErrorResponse(errors.NewUserFacingErrorWithStatusCode(
+		receiver.writer.WriteErrorResponse(appErrors.NewUserFacingErrorWithStatusCode(
 			"you don't have write access to this orgainzation",
 			http.StatusForbidden,
 		), writer)
@@ -43,6 +44,14 @@ func (receiver *Controller) CreateRepository(writer http.ResponseWriter, request
 
 	repo, err := receiver.manager.CreateRepository(request.Context(), body.OrganizationID, body.URL, body.Name)
 	if err != nil {
+		if errors.Is(err, manager.ErrRepositoryAlreadyExists) {
+			receiver.writer.WriteErrorResponse(
+				appErrors.NewUserFacingErrorWithStatusCode("repository already exists", http.StatusConflict),
+				writer,
+			)
+			return
+		}
+
 		receiver.writer.WriteErrorResponse(err, writer)
 		return
 	}

@@ -1,11 +1,12 @@
 package repo
 
 type findOptions struct {
-	where            []string
-	limit            uint
-	orderByField     string
-	orderByDirection string
-	bindValues       []any
+	where             []string
+	limit             uint
+	orderByField      string
+	orderByDirection  string
+	bindValues        []any
+	skipAutoTableName bool
 }
 
 type FindOption func(*findOptions)
@@ -27,5 +28,11 @@ func WithOrderBy(column, direction string) FindOption {
 	return func(options *findOptions) {
 		options.orderByField = column
 		options.orderByDirection = direction
+	}
+}
+
+func WithSkipAutoTableName(skip bool) FindOption {
+	return func(options *findOptions) {
+		options.skipAutoTableName = skip
 	}
 }
