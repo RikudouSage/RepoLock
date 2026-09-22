@@ -26,6 +26,7 @@ type GlobalConfig struct {
 	// config
 	RegistrationsEnabled bool   `default:"true" split_words:"true"`
 	PasswordLoginEnabled bool   `default:"true" split_words:"true"`
+	AnyoneCanRequestJoin bool   `default:"true" split_words:"true"`
 	SessionStorePath     string `default:"$HOME/.config/repo-lock/sessions" split_words:"true"`
 
 	// db

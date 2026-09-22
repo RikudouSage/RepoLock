@@ -11,9 +11,10 @@ import (
 type AccessType string
 
 const (
-	AccessTypeNone  AccessType = "none"
-	AccessTypeRead  AccessType = "read"
-	AccessTypeWrite AccessType = "write"
+	AccessTypeNone   AccessType = "none"
+	AccessTypeRead   AccessType = "read"
+	AccessTypeWrite  AccessType = "write"
+	AccessTypeManage            = AccessTypeWrite
 )
 
 type Access interface {

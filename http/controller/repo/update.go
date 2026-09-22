@@ -51,10 +51,7 @@ func (receiver *Controller) UpdateRepository(writer http.ResponseWriter, request
 	}
 
 	if !hasAccess {
-		receiver.writer.WriteErrorResponse(appErrors.NewUserFacingErrorWithStatusCode(
-			"you don't have write access to this repository",
-			http.StatusForbidden,
-		), writer)
+		receiver.writer.WriteErrorResponse(appErrors.NewAccessDeniedError(), writer)
 		return
 	}
 

@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"go.chrastecky.dev/repolock/db"
-	"go.chrastecky.dev/repolock/db/repo"
 	"go.chrastecky.dev/repolock/entity"
 	"go.chrastecky.dev/repolock/http/dto"
 	"go.chrastecky.dev/repolock/manager"
@@ -20,25 +19,25 @@ type Creator interface {
 func NewCreator(
 	userManager manager.User,
 	organizationManager manager.Organization,
-	organizationMembershipRepository repo.OrganizationMembershipRepository,
+	organizationMembershipManager manager.OrganizationMembership,
 	transactionCreator db.TransactionCreator,
 	passwordHasher service.PasswordHasher,
 ) Creator {
 	return &creator{
-		userManager:                      userManager,
-		organizationManager:              organizationManager,
-		organizationMembershipRepository: organizationMembershipRepository,
-		transactionCreator:               transactionCreator,
-		passwordHasher:                   passwordHasher,
+		userManager:                   userManager,
+		organizationManager:           organizationManager,
+		organizationMembershipManager: organizationMembershipManager,
+		transactionCreator:            transactionCreator,
+		passwordHasher:                passwordHasher,
 	}
 }
 
 type creator struct {
-	userManager                      manager.User
-	organizationManager              manager.Organization
-	organizationMembershipRepository repo.OrganizationMembershipRepository
-	transactionCreator               db.TransactionCreator
-	passwordHasher                   service.PasswordHasher
+	userManager                   manager.User
+	organizationManager           manager.Organization
+	organizationMembershipManager manager.OrganizationMembership
+	transactionCreator            db.TransactionCreator
+	passwordHasher                service.PasswordHasher
 }
 
 func (receiver *creator) Create(ctx context.Context, userRegistration dto.UserRegister) (*entity.User, error) {
@@ -91,7 +90,7 @@ func (receiver *creator) Create(ctx context.Context, userRegistration dto.UserRe
 		Permission:     permission,
 		Approved:       approved,
 	}
-	if err := receiver.organizationMembershipRepository.Create(ctx, membership); err != nil {
+	if err := receiver.organizationMembershipManager.Create(ctx, membership); err != nil {
 		return nil, fmt.Errorf("failed creating organization membership: %w", err)
 	}
 
