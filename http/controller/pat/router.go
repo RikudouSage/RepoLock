@@ -13,6 +13,7 @@ func Router(
 	router := chi.NewRouter()
 	router.Use(requiresValidUserMiddleware)
 
+	router.Get("/", controller.ListPersonalAccessTokens)
 	router.Post("/", controller.CreatePersonalAccessToken)
 	router.Delete("/{id}", controller.DeletePersonalAccessToken)
 

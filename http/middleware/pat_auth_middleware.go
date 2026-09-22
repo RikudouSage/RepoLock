@@ -1,8 +1,10 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 	"strings"
+	"time"
 
 	apphttp "go.chrastecky.dev/repolock/http"
 	"go.chrastecky.dev/repolock/manager"
@@ -24,6 +26,19 @@ func PersonalAccessTokenAuthMiddleware(
 					request = request.WithContext(
 						apphttp.WithUserID(request.Context(), pat.UserID),
 					)
+					go func() {
+						ctx, cancel := context.WithTimeout(request.Context(), 10*time.Second)
+						defer cancel()
+
+						err := patManager.UpdateLastUsedAt(
+							ctx,
+							pat,
+							time.Now(),
+						)
+						if err != nil {
+							logger.Warn("failed to update last used at", zap.Error(err))
+						}
+					}()
 				}
 			}
 

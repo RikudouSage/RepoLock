@@ -7,13 +7,13 @@ import (
 )
 
 type PersonalAccessToken struct {
-	ID     uuid.UUID
-	UserID uuid.UUID
+	ID     uuid.UUID `json:"id"`
+	UserID uuid.UUID `json:"-"`
 
-	Name      string
-	TokenHash string
+	Name      string `json:"name"`
+	TokenHash string `json:"-"`
 
-	CreatedAt  time.Time
-	ExpiresAt  *time.Time
-	LastUsedAt *time.Time
+	CreatedAt  time.Time  `json:"created_at"`
+	ExpiresAt  *time.Time `json:"expires_at"`
+	LastUsedAt *time.Time `json:"last_used_at"`
 }

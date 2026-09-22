@@ -22,6 +22,8 @@ type PersonalAccessToken interface {
 	FindByToken(ctx context.Context, authorization string) (*entity.PersonalAccessToken, error)
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.PersonalAccessToken, error)
 	DeleteToken(ctx context.Context, pat *entity.PersonalAccessToken) error
+	FindAllForUser(ctx context.Context, user *entity.User) ([]*entity.PersonalAccessToken, error)
+	UpdateLastUsedAt(ctx context.Context, pat *entity.PersonalAccessToken, dateTime time.Time) error
 }
 
 func NewPersonalAccessTokenManager(
@@ -112,4 +114,16 @@ func (receiver *personalAccessToken) FindByID(ctx context.Context, id uuid.UUID)
 
 func (receiver *personalAccessToken) DeleteToken(ctx context.Context, pat *entity.PersonalAccessToken) error {
 	return receiver.repository.Delete(ctx, repo.WithWhere("id = ?", pat.ID))
+}
+
+func (receiver *personalAccessToken) FindAllForUser(ctx context.Context, user *entity.User) ([]*entity.PersonalAccessToken, error) {
+	return receiver.repository.Find(
+		ctx,
+		repo.WithWhere("user_id = ?", user.ID),
+		repo.WithOrderBy("name", "asc"),
+	)
+}
+
+func (receiver *personalAccessToken) UpdateLastUsedAt(ctx context.Context, pat *entity.PersonalAccessToken, dateTime time.Time) error {
+	return receiver.repository.UpdateLastUsedAt(ctx, pat, dateTime)
 }
