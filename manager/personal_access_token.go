@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -11,6 +12,8 @@ import (
 	"go.chrastecky.dev/repolock/entity"
 	"go.chrastecky.dev/repolock/service"
 )
+
+var ErrPATNotFound = errors.New("personal access token not found")
 
 type PATConfig struct {
 	Name      string
@@ -93,7 +96,7 @@ func (receiver *personalAccessToken) FindByToken(ctx context.Context, token stri
 	}
 
 	if pat == nil {
-		return nil, fmt.Errorf("personal access token not found")
+		return nil, ErrPATNotFound
 	}
 
 	verify, err := receiver.passwordVerifier.Verify(parts[2], pat.TokenHash)
@@ -103,6 +106,17 @@ func (receiver *personalAccessToken) FindByToken(ctx context.Context, token stri
 
 	if !verify {
 		return nil, fmt.Errorf("invalid personal access token")
+	}
+
+	if pat.ExpiresAt != nil && receiver.now().After(*pat.ExpiresAt) {
+		go func() {
+			deleteCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+			defer cancel()
+
+			_ = receiver.DeleteToken(deleteCtx, pat)
+		}()
+
+		return nil, ErrPATNotFound
 	}
 
 	return pat, nil
