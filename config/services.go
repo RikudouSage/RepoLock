@@ -33,6 +33,7 @@ func provideServices() fx.Option {
 		user.NewCreator,
 		service.NewPasswordHasher,
 		service.NewPasswordVerifier,
+		service.NewTokenDigester,
 		service.NewFileSessionStore,
 		service.NewRandomStringGenerator,
 		service.NewRepositoryURLNormalizer,

@@ -24,6 +24,7 @@ type GlobalConfig struct {
 	Debug    bool   `default:"false"`
 
 	// config
+	Secret               string `required:"true" split_words:"true"`
 	RegistrationsEnabled bool   `default:"true" split_words:"true"`
 	PasswordLoginEnabled bool   `default:"true" split_words:"true"`
 	AnyoneCanRequestJoin bool   `default:"true" split_words:"true"`
@@ -47,6 +48,10 @@ func (receiver *GlobalConfig) Validate() error {
 
 	if receiver.DatabaseType == DatabaseTypePostgres && (receiver.DatabaseHost == "" || receiver.DatabaseName == "") {
 		return fmt.Errorf("database host or name is empty for postgres mode")
+	}
+
+	if len(receiver.Secret) < 32 {
+		return fmt.Errorf("app secret must contain at least 32 characters (set APP_SECRET)")
 	}
 
 	return nil

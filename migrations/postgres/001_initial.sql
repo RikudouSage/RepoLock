@@ -47,7 +47,7 @@ CREATE TABLE personal_access_tokens (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     name TEXT NOT NULL,
-    token_hash TEXT NOT NULL UNIQUE,
+    token_digest CHAR(64) NOT NULL UNIQUE,
     created_at TIMESTAMPTZ NOT NULL,
     expires_at TIMESTAMPTZ,
     last_used_at TIMESTAMPTZ

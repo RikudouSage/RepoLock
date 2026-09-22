@@ -53,7 +53,7 @@ CREATE TABLE personal_access_tokens (
     id BLOB(16) PRIMARY KEY NOT NULL,
     user_id BLOB(16) NOT NULL,
     name TEXT NOT NULL,
-    token_hash TEXT NOT NULL UNIQUE,
+    token_digest TEXT NOT NULL UNIQUE,
     created_at DATETIME NOT NULL,
     expires_at DATETIME,
     last_used_at DATETIME,

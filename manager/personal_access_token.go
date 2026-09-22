@@ -31,14 +31,12 @@ type PersonalAccessToken interface {
 
 func NewPersonalAccessTokenManager(
 	repository repo.PersonalAccessTokenRepository,
-	passwordHasher service.PasswordHasher,
-	passwordVerifier service.PasswordVerifier,
+	tokenDigester service.TokenDigester,
 	randomStringGenerator service.RandomStringGenerator,
 ) PersonalAccessToken {
 	return &personalAccessToken{
 		repository:            repository,
-		passwordHasher:        passwordHasher,
-		passwordVerifier:      passwordVerifier,
+		tokenDigester:         tokenDigester,
 		randomStringGenerator: randomStringGenerator,
 		now:                   time.Now,
 	}
@@ -46,25 +44,20 @@ func NewPersonalAccessTokenManager(
 
 type personalAccessToken struct {
 	repository            repo.PersonalAccessTokenRepository
-	passwordHasher        service.PasswordHasher
-	passwordVerifier      service.PasswordVerifier
+	tokenDigester         service.TokenDigester
 	randomStringGenerator service.RandomStringGenerator
 	now                   func() time.Time
 }
 
 func (receiver *personalAccessToken) CreateForUser(ctx context.Context, user *entity.User, opts *PATConfig) (*entity.PersonalAccessToken, string, error) {
 	rawToken := receiver.randomStringGenerator.GenerateRandomString(64)
-	hash, err := receiver.passwordHasher.Hash(rawToken)
-	if err != nil {
-		return nil, "", fmt.Errorf("failed hashing password: %w", err)
-	}
 
 	pat := &entity.PersonalAccessToken{
-		UserID:    user.ID,
-		Name:      opts.Name,
-		TokenHash: hash,
-		CreatedAt: receiver.now(),
-		ExpiresAt: opts.ExpiresAt,
+		UserID:      user.ID,
+		Name:        opts.Name,
+		TokenDigest: receiver.tokenDigester.Digest(rawToken),
+		CreatedAt:   receiver.now(),
+		ExpiresAt:   opts.ExpiresAt,
 	}
 
 	if err := receiver.repository.Create(ctx, pat); err != nil {
@@ -90,22 +83,20 @@ func (receiver *personalAccessToken) FindByToken(ctx context.Context, token stri
 		return nil, fmt.Errorf("invalid token format, expected uuid, got '%s'", parts[1])
 	}
 
-	pat, err := receiver.repository.FindByID(ctx, tokenID)
+	pats, err := receiver.repository.Find(
+		ctx,
+		repo.WithWhere("token_digest = ?", receiver.tokenDigester.Digest(parts[2])),
+		repo.WithLimit(1),
+	)
 	if err != nil {
-		return nil, fmt.Errorf("failed persisting personal access token: %w", err)
+		return nil, fmt.Errorf("failed finding personal access token: %w", err)
 	}
-
-	if pat == nil {
+	if len(pats) == 0 {
 		return nil, ErrPATNotFound
 	}
-
-	verify, err := receiver.passwordVerifier.Verify(parts[2], pat.TokenHash)
-	if err != nil {
-		return nil, fmt.Errorf("failed verifying personal access token: %w", err)
-	}
-
-	if !verify {
-		return nil, fmt.Errorf("invalid personal access token")
+	pat := pats[0]
+	if pat.ID != tokenID {
+		return nil, ErrPATNotFound
 	}
 
 	if pat.ExpiresAt != nil && receiver.now().After(*pat.ExpiresAt) {
