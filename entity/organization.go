@@ -3,7 +3,7 @@ package entity
 import "github.com/google/uuid"
 
 type Organization struct {
-	ID uuid.UUID
+	ID uuid.UUID `json:"id"`
 
-	Name string
+	Name string `json:"name"`
 }

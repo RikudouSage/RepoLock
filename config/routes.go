@@ -1,6 +1,7 @@
 package config
 
 import (
+	"go.chrastecky.dev/repolock/http/controller/org"
 	"go.chrastecky.dev/repolock/http/controller/pat"
 	"go.chrastecky.dev/repolock/http/controller/permissions"
 	"go.chrastecky.dev/repolock/http/controller/repo"
@@ -21,6 +22,7 @@ func provideControllers() fx.Option {
 		pat.NewController,
 		repo.NewController,
 		permissions.NewController,
+		org.NewController,
 	)
 }
 
@@ -30,5 +32,6 @@ func provideRoutes() fx.Option {
 		asRouter(pat.Router),
 		asRouter(repo.Router),
 		asRouter(permissions.Router),
+		asRouter(org.Router),
 	)
 }
