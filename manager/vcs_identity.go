@@ -14,8 +14,11 @@ import (
 var ErrIdentityAlreadyExists = errors.New("the specified identity already exists")
 
 type VCSIdentity interface {
-	GetForUser(ctx context.Context, id uuid.UUID) ([]*entity.VCSIdentity, error)
+	GetForUser(ctx context.Context, userID uuid.UUID) ([]*entity.VCSIdentity, error)
 	CreateForUser(ctx context.Context, identity string, userID uuid.UUID) (*entity.VCSIdentity, error)
+	GetForUserByIdentity(ctx context.Context, identity string, userID uuid.UUID) (*entity.VCSIdentity, error)
+	GetForUserByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*entity.VCSIdentity, error)
+	Delete(ctx context.Context, identity *entity.VCSIdentity) error
 }
 
 func NewVCSIdentityManager(
@@ -30,10 +33,10 @@ type vcsIdentity struct {
 	vcsRepo repo.VCSIdentityRepository
 }
 
-func (receiver *vcsIdentity) GetForUser(ctx context.Context, id uuid.UUID) ([]*entity.VCSIdentity, error) {
+func (receiver *vcsIdentity) GetForUser(ctx context.Context, userID uuid.UUID) ([]*entity.VCSIdentity, error) {
 	return receiver.vcsRepo.Find(
 		ctx,
-		repo.WithWhere("user_id = ?", id),
+		repo.WithWhere("user_id = ?", userID),
 	)
 }
 
@@ -52,4 +55,42 @@ func (receiver *vcsIdentity) CreateForUser(ctx context.Context, identity string,
 	}
 
 	return item, nil
+}
+
+func (receiver *vcsIdentity) GetForUserByIdentity(ctx context.Context, identity string, userID uuid.UUID) (*entity.VCSIdentity, error) {
+	items, err := receiver.vcsRepo.Find(
+		ctx,
+		repo.WithWhere("user_id = ?", userID),
+		repo.WithWhere("identity = ?", identity),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get vcs identity by identity: %w", err)
+	}
+
+	if len(items) == 0 {
+		return nil, nil
+	}
+
+	return items[0], nil
+}
+
+func (receiver *vcsIdentity) Delete(ctx context.Context, identity *entity.VCSIdentity) error {
+	return receiver.vcsRepo.Delete(ctx, repo.WithWhere("id = ?", identity.ID))
+}
+
+func (receiver *vcsIdentity) GetForUserByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*entity.VCSIdentity, error) {
+	items, err := receiver.vcsRepo.Find(
+		ctx,
+		repo.WithWhere("user_id = ?", userID),
+		repo.WithWhere("id = ?", id),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get vcs identity by id: %w", err)
+	}
+
+	if len(items) == 0 {
+		return nil, nil
+	}
+
+	return items[0], nil
 }

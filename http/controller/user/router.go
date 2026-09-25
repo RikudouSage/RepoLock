@@ -23,6 +23,8 @@ func Router(
 	router.With(requiresValidUserMiddleware).Route("/identities", func(router chi.Router) {
 		router.Get("/", controller.GetIdentities)
 		router.Post("/", controller.CreateIdentity)
+		router.Delete("/{identity}", controller.DeleteByIdentity)
+		router.Delete("/by-id/{id}", controller.DeleteByID)
 	})
 
 	return data.AsMountableRouter("users", router)
