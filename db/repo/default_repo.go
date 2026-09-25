@@ -134,7 +134,7 @@ func (receiver *defaultRepository[TEntity]) Create(ctx context.Context, entity *
 func (receiver *defaultRepository[TEntity]) Delete(ctx context.Context, options ...FindOption) error {
 	database := receiver.getQueryExecutor(ctx)
 
-	query, bind := receiver.createQuery("delete from", options)
+	query, bind := receiver.createQuery(queryTypeDelete, options)
 	query = receiver.queryFormatter.FormatQuery(query)
 
 	if _, err := database.ExecContext(ctx, query, bind...); err != nil {

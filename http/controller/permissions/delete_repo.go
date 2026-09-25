@@ -7,11 +7,10 @@ import (
 	"github.com/google/uuid"
 	"go.chrastecky.dev/repolock/errors"
 	apphttp "go.chrastecky.dev/repolock/http"
-	"go.chrastecky.dev/repolock/http/dto"
 	"go.chrastecky.dev/repolock/manager"
 )
 
-func (receiver *Controller) GetUserRepositoryPermission(writer http.ResponseWriter, request *http.Request) {
+func (receiver *Controller) DeleteUserRepositoryPermission(writer http.ResponseWriter, request *http.Request) {
 	repoID, err := uuid.Parse(chi.URLParam(request, "repoID"))
 	if err != nil {
 		receiver.writer.WriteErrorResponse(errors.NewUserFacingError("invalid org id"), writer)
@@ -59,10 +58,10 @@ func (receiver *Controller) GetUserRepositoryPermission(writer http.ResponseWrit
 		return
 	}
 
-	receiver.writer.WriteResponse(http.StatusOK, &dto.RepositoryPermission{
-		UserID:           perm.UserID,
-		RepositoryID:     perm.RepositoryID,
-		Permission:       perm.Permission,
-		FromOrganization: false,
-	}, writer)
+	if err = receiver.repoPermissionManager.Delete(request.Context(), perm); err != nil {
+		receiver.writer.WriteErrorResponse(err, writer)
+		return
+	}
+
+	receiver.writer.WriteResponse(http.StatusNoContent, nil, writer)
 }

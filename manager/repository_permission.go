@@ -18,7 +18,8 @@ var ErrPermissionAlreadyExists = errors.New("permission for this user already ex
 type RepositoryPermission interface {
 	GetPermissions(ctx context.Context, repository *entity.Repository) ([]*dto.RepositoryPermission, error)
 	Create(ctx context.Context, perm *entity.RepositoryPermission) error
-	GetPermission(ctx context.Context, repoID uuid.UUID, userID uuid.UUID) (*entity.RepositoryPermission, error)
+	GetUserPermission(ctx context.Context, repoID uuid.UUID, userID uuid.UUID) (*entity.RepositoryPermission, error)
+	Delete(ctx context.Context, perm *entity.RepositoryPermission) error
 }
 
 func NewRepositoryPermissionManager(
@@ -85,7 +86,7 @@ func (receiver *repositoryPermission) Create(ctx context.Context, perm *entity.R
 	return err
 }
 
-func (receiver *repositoryPermission) GetPermission(ctx context.Context, repoID uuid.UUID, userID uuid.UUID) (*entity.RepositoryPermission, error) {
+func (receiver *repositoryPermission) GetUserPermission(ctx context.Context, repoID uuid.UUID, userID uuid.UUID) (*entity.RepositoryPermission, error) {
 	items, err := receiver.repositoryPermissionRepository.Find(
 		ctx,
 		repo.WithWhere("repository_id = ?", repoID),
@@ -101,4 +102,8 @@ func (receiver *repositoryPermission) GetPermission(ctx context.Context, repoID 
 	}
 
 	return items[0], nil
+}
+
+func (receiver *repositoryPermission) Delete(ctx context.Context, perm *entity.RepositoryPermission) error {
+	return receiver.repositoryPermissionRepository.Delete(ctx, repo.WithWhere("id = ?", perm.ID))
 }
