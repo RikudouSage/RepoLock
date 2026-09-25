@@ -8,22 +8,25 @@ import (
 )
 
 type Controller struct {
-	writer     response.Writer
-	orgManager manager.Organization
-	creator    organization.Creator
-	logger     *zap.Logger
+	writer        response.Writer
+	orgManager    manager.Organization
+	creator       organization.Creator
+	accessManager manager.Access
+	logger        *zap.Logger
 }
 
 func NewController(
 	writer response.Writer,
 	orgManager manager.Organization,
 	creator organization.Creator,
+	accessManager manager.Access,
 	logger *zap.Logger,
 ) *Controller {
 	return &Controller{
-		writer:     writer,
-		orgManager: orgManager,
-		logger:     logger,
-		creator:    creator,
+		writer:        writer,
+		orgManager:    orgManager,
+		logger:        logger,
+		creator:       creator,
+		accessManager: accessManager,
 	}
 }
