@@ -5,6 +5,7 @@ import (
 	"go.chrastecky.dev/repolock/db/repo"
 	"go.chrastecky.dev/repolock/manager"
 	"go.chrastecky.dev/repolock/service"
+	"go.chrastecky.dev/repolock/service/organization"
 	"go.chrastecky.dev/repolock/service/user"
 	"go.uber.org/fx"
 )
@@ -39,5 +40,6 @@ func provideServices() fx.Option {
 		service.NewFileSessionStore,
 		service.NewRandomStringGenerator,
 		service.NewRepositoryURLNormalizer,
+		organization.NewCreator,
 	)
 }

@@ -14,6 +14,7 @@ func Router(
 	router.Use(requiresValidUserMiddleware)
 
 	router.Get("/", controller.ListOrgs)
+	router.Post("/", controller.Create)
 
 	return data.AsMountableRouter("/org", router)
 }
