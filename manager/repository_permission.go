@@ -2,16 +2,21 @@ package manager
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/samber/lo"
+	"go.chrastecky.dev/repolock/db"
 	"go.chrastecky.dev/repolock/db/repo"
 	"go.chrastecky.dev/repolock/dto"
 	"go.chrastecky.dev/repolock/entity"
 )
 
+var ErrPermissionAlreadyExists = errors.New("permission for this user already exists")
+
 type RepositoryPermission interface {
 	GetPermissions(ctx context.Context, repository *entity.Repository) ([]*dto.Permission, error)
+	Create(ctx context.Context, perm *entity.RepositoryPermission) error
 }
 
 func NewRepositoryPermissionManager(
@@ -69,4 +74,13 @@ func (receiver *repositoryPermission) GetPermissions(ctx context.Context, reposi
 			}
 		}),
 	), nil
+}
+
+func (receiver *repositoryPermission) Create(ctx context.Context, perm *entity.RepositoryPermission) error {
+	err := receiver.repositoryPermissionRepository.Create(ctx, perm)
+	if db.IsDuplicateError(err) {
+		return fmt.Errorf("%w: %w", ErrPermissionAlreadyExists, err)
+	}
+
+	return err
 }

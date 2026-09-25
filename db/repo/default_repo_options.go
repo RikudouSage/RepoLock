@@ -1,5 +1,17 @@
 package repo
 
+type joinType string
+
+const (
+	joinTypeInner joinType = "inner"
+	joinTypeLeft  joinType = "left"
+)
+
+type joinValue struct {
+	on       string
+	joinType joinType
+}
+
 type findOptions struct {
 	selectFields     []string
 	where            []string
@@ -7,7 +19,7 @@ type findOptions struct {
 	orderByField     string
 	orderByDirection string
 	bindValues       []any
-	joins            map[string]string
+	joins            map[string]joinValue
 	tableAlias       string
 }
 
@@ -36,9 +48,25 @@ func WithOrderBy(column, direction string) FindOption {
 func WithJoin(table, on string) FindOption {
 	return func(options *findOptions) {
 		if options.joins == nil {
-			options.joins = make(map[string]string)
+			options.joins = make(map[string]joinValue)
 		}
-		options.joins[table] = on
+		options.joins[table] = joinValue{
+			on:       on,
+			joinType: joinTypeInner,
+		}
+	}
+}
+
+func WithLeftJoin(table, on string) FindOption {
+	return func(options *findOptions) {
+		if options.joins == nil {
+			options.joins = make(map[string]joinValue)
+		}
+
+		options.joins[table] = joinValue{
+			on:       on,
+			joinType: joinTypeLeft,
+		}
 	}
 }
 

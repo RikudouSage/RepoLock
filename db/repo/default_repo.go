@@ -248,11 +248,13 @@ func (receiver *defaultRepository[TEntity]) createQuery(queryType queryType, opt
 	}
 
 	if len(optionsHolder.joins) > 0 {
-		for table, on := range optionsHolder.joins {
-			queryBuilder.WriteString(" inner join ")
+		for table, val := range optionsHolder.joins {
+			queryBuilder.WriteString(" ")
+			queryBuilder.WriteString(string(val.joinType))
+			queryBuilder.WriteString(" join ")
 			queryBuilder.WriteString(table)
 			queryBuilder.WriteString(" on ")
-			queryBuilder.WriteString(on)
+			queryBuilder.WriteString(val.on)
 		}
 	}
 

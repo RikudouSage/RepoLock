@@ -39,10 +39,11 @@ func (receiver *repositoryRepository) FindForUser(ctx context.Context, user *ent
 	database := receiver.getQueryIssuer(ctx)
 
 	options = append([]FindOption{
-		WithSelect([]string{"r.*"}),
+		WithSelect([]string{"distinct r.*"}),
 		WithAlias("r"),
-		WithJoin("organization_memberships om", "om.organization_id = r.organization_id"),
-		WithWhere("om.user_id = ?", user.ID),
+		WithLeftJoin("organization_memberships om", "om.organization_id = r.organization_id"),
+		WithLeftJoin("repository_permissions rp", "rp.repository_id = r.id"),
+		WithWhere("(om.user_id = ? and om.approved = true) or rp.user_id = ?", user.ID, user.ID),
 	}, options...)
 
 	query, bind := receiver.createQuery(queryTypeSelect, options)
