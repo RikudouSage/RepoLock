@@ -17,7 +17,7 @@ func (receiver *Controller) Register(writer http.ResponseWriter, req *http.Reque
 
 	if err != nil {
 		receiver.logger.Info("invalid body", zap.Error(err))
-		receiver.responseWriter.WriteErrorResponse(
+		receiver.writer.WriteErrorResponse(
 			appErrors.NewUserFacingError("invalid request body"),
 			writer,
 		)
@@ -27,15 +27,15 @@ func (receiver *Controller) Register(writer http.ResponseWriter, req *http.Reque
 	_, err = receiver.userCreator.Create(req.Context(), body)
 	if err != nil {
 		if errors.Is(err, manager.ErrUserAlreadyExists) {
-			receiver.responseWriter.WriteErrorResponse(
+			receiver.writer.WriteErrorResponse(
 				appErrors.NewUserFacingErrorWithStatusCode("the user already exists", http.StatusConflict),
 				writer,
 			)
 			return
 		}
-		receiver.responseWriter.WriteErrorResponse(err, writer)
+		receiver.writer.WriteErrorResponse(err, writer)
 		return
 	}
 
-	receiver.responseWriter.WriteResponse(http.StatusNoContent, nil, writer)
+	receiver.writer.WriteResponse(http.StatusNoContent, nil, writer)
 }

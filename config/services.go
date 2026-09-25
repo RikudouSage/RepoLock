@@ -21,6 +21,7 @@ func provideServices() fx.Option {
 		repo.NewPersonalAccessTokenRepository,
 		repo.NewRepositoryRepository,
 		repo.NewRepositoryPermissionRepository,
+		repo.NewVCSIdentityRepository,
 
 		manager.NewUserManager,
 		manager.NewOrganizationManager,
@@ -29,6 +30,7 @@ func provideServices() fx.Option {
 		manager.NewAccessManager,
 		manager.NewRepositoryPermissionManager,
 		manager.NewOrganizationMembershipManager,
+		manager.NewVCSIdentityManager,
 
 		user.NewCreator,
 		service.NewPasswordHasher,

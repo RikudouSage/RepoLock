@@ -3,11 +3,13 @@ package user
 import (
 	"github.com/go-chi/chi/v5"
 	"go.chrastecky.dev/repolock/config/data"
+	"go.chrastecky.dev/repolock/http/middleware"
 )
 
 func Router(
 	controller *Controller,
 	config *data.GlobalConfig,
+	requiresValidUserMiddleware middleware.RequiresValidUserMiddleware,
 ) *data.MountableRouter {
 	router := chi.NewRouter()
 
@@ -17,6 +19,11 @@ func Router(
 	if config.PasswordLoginEnabled {
 		router.Post("/login/password", controller.UserPasswordLogin)
 	}
+
+	router.With(requiresValidUserMiddleware).Route("/identities", func(router chi.Router) {
+		router.Get("/", controller.GetIdentities)
+		router.Post("/", controller.CreateIdentity)
+	})
 
 	return data.AsMountableRouter("users", router)
 }
