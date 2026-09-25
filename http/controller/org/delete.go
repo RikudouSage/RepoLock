@@ -7,27 +7,14 @@ import (
 	"github.com/google/uuid"
 	"go.chrastecky.dev/repolock/errors"
 	apphttp "go.chrastecky.dev/repolock/http"
-	"go.chrastecky.dev/repolock/http/dto"
 	"go.chrastecky.dev/repolock/manager"
-	"go.uber.org/zap"
 )
 
-func (receiver *Controller) UpdateOrg(writer http.ResponseWriter, request *http.Request) {
+func (receiver *Controller) DeleteOrg(writer http.ResponseWriter, request *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(request, "id"))
 	if err != nil {
 		receiver.writer.WriteErrorResponse(
 			errors.NewUserFacingError("invalid id"),
-			writer,
-		)
-		return
-	}
-
-	defer request.Body.Close()
-	body, err := apphttp.ParseBody[dto.CreateOrUpdateOrganizationRequest](request.Body)
-	if err != nil {
-		receiver.logger.Info("unable to parse body", zap.Error(err))
-		receiver.writer.WriteErrorResponse(
-			errors.NewUserFacingError("invalid body"),
 			writer,
 		)
 		return
@@ -60,12 +47,10 @@ func (receiver *Controller) UpdateOrg(writer http.ResponseWriter, request *http.
 		return
 	}
 
-	org.Name = body.Name
-
-	if err = receiver.orgManager.Update(request.Context(), org); err != nil {
+	if err = receiver.orgManager.Delete(request.Context(), org.ID); err != nil {
 		receiver.writer.WriteErrorResponse(err, writer)
 		return
 	}
 
-	receiver.writer.WriteResponse(http.StatusOK, org, writer)
+	receiver.writer.WriteResponse(http.StatusNoContent, nil, writer)
 }

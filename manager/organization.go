@@ -18,6 +18,7 @@ type Organization interface {
 	FindByID(ctx context.Context, organizationID uuid.UUID) (*entity.Organization, error)
 	GetForUser(ctx context.Context, userID uuid.UUID) ([]*entity.Organization, error)
 	Update(ctx context.Context, org *entity.Organization) error
+	Delete(ctx context.Context, id uuid.UUID) error
 }
 
 func NewOrganizationManager(
@@ -61,4 +62,7 @@ func (receiver *organization) GetForUser(ctx context.Context, userID uuid.UUID) 
 
 func (receiver *organization) Update(ctx context.Context, org *entity.Organization) error {
 	return receiver.organizationRepository.Update(ctx, org)
+}
+func (receiver *organization) Delete(ctx context.Context, id uuid.UUID) error {
+	return receiver.organizationRepository.Delete(ctx, repo.WithWhere("id = ?", id))
 }

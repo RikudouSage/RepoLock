@@ -17,6 +17,7 @@ func Router(
 	router.Post("/", controller.Create)
 	router.Get("/{id}", controller.GetOrg)
 	router.Patch("/{id}", controller.UpdateOrg)
+	router.Delete("/{id}", controller.DeleteOrg)
 
 	return data.AsMountableRouter("/org", router)
 }
