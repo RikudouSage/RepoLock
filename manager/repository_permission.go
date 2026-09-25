@@ -5,18 +5,20 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"go.chrastecky.dev/repolock/db"
 	"go.chrastecky.dev/repolock/db/repo"
-	"go.chrastecky.dev/repolock/dto"
 	"go.chrastecky.dev/repolock/entity"
+	"go.chrastecky.dev/repolock/http/dto"
 )
 
 var ErrPermissionAlreadyExists = errors.New("permission for this user already exists")
 
 type RepositoryPermission interface {
-	GetPermissions(ctx context.Context, repository *entity.Repository) ([]*dto.Permission, error)
+	GetPermissions(ctx context.Context, repository *entity.Repository) ([]*dto.RepositoryPermission, error)
 	Create(ctx context.Context, perm *entity.RepositoryPermission) error
+	GetPermission(ctx context.Context, repoID uuid.UUID, userID uuid.UUID) (*entity.RepositoryPermission, error)
 }
 
 func NewRepositoryPermissionManager(
@@ -34,7 +36,7 @@ type repositoryPermission struct {
 	organizationMembershipRepository repo.OrganizationMembershipRepository
 }
 
-func (receiver *repositoryPermission) GetPermissions(ctx context.Context, repository *entity.Repository) ([]*dto.Permission, error) {
+func (receiver *repositoryPermission) GetPermissions(ctx context.Context, repository *entity.Repository) ([]*dto.RepositoryPermission, error) {
 	repoPermissions, err := receiver.repositoryPermissionRepository.Find(
 		ctx,
 		repo.WithWhere("repository_id = ?", repository.ID),
@@ -55,22 +57,20 @@ func (receiver *repositoryPermission) GetPermissions(ctx context.Context, reposi
 	}
 
 	return lo.Concat(
-		lo.Map(repoPermissions, func(item *entity.RepositoryPermission, _ int) *dto.Permission {
-			return &dto.Permission{
-				Type:         dto.PermissionTypeUser,
-				Permission:   item.Permission,
-				UserID:       item.UserID,
-				RepositoryID: item.RepositoryID,
-				Approved:     true,
+		lo.Map(repoPermissions, func(item *entity.RepositoryPermission, _ int) *dto.RepositoryPermission {
+			return &dto.RepositoryPermission{
+				UserID:           item.UserID,
+				RepositoryID:     item.RepositoryID,
+				Permission:       item.Permission,
+				FromOrganization: false,
 			}
 		}),
-		lo.Map(orgMemberships, func(item *entity.OrganizationMembership, _ int) *dto.Permission {
-			return &dto.Permission{
-				Type:           dto.PermissionTypeGroup,
-				Permission:     item.Permission,
-				UserID:         item.UserID,
-				OrganizationID: item.OrganizationID,
-				Approved:       item.Approved,
+		lo.Map(orgMemberships, func(item *entity.OrganizationMembership, _ int) *dto.RepositoryPermission {
+			return &dto.RepositoryPermission{
+				UserID:           item.UserID,
+				RepositoryID:     repository.ID,
+				Permission:       item.Permission,
+				FromOrganization: true,
 			}
 		}),
 	), nil
@@ -83,4 +83,22 @@ func (receiver *repositoryPermission) Create(ctx context.Context, perm *entity.R
 	}
 
 	return err
+}
+
+func (receiver *repositoryPermission) GetPermission(ctx context.Context, repoID uuid.UUID, userID uuid.UUID) (*entity.RepositoryPermission, error) {
+	items, err := receiver.repositoryPermissionRepository.Find(
+		ctx,
+		repo.WithWhere("repository_id = ?", repoID),
+		repo.WithWhere("user_id = ?", userID),
+		repo.WithLimit(1),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("find repository permissions: %w", err)
+	}
+
+	if len(items) == 0 {
+		return nil, nil
+	}
+
+	return items[0], nil
 }

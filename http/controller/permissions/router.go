@@ -24,7 +24,7 @@ func Router(
 	router.Route("/repo", func(router chi.Router) {
 		router.Get("/{repoID}", controller.GetRepositoryPermissions)
 		router.Post("/{repoID}", controller.CreateRepositoryPermission)
-		//router.Get("/{repoID}/{userID}", controller.GetUserRepositoryPermission)
+		router.Get("/{repoID}/{userID}", controller.GetUserRepositoryPermission)
 		//router.Delete("/{repoID}/{userID}", controller.DeleteUserRepositoryPermission)
 		//router.Patch("/{repoID}/{userID}", controller.UpdateUserRepositoryPermission)
 	})
