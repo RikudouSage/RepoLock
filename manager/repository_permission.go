@@ -20,6 +20,7 @@ type RepositoryPermission interface {
 	Create(ctx context.Context, perm *entity.RepositoryPermission) error
 	GetUserPermission(ctx context.Context, repoID uuid.UUID, userID uuid.UUID) (*entity.RepositoryPermission, error)
 	Delete(ctx context.Context, perm *entity.RepositoryPermission) error
+	Update(ctx context.Context, perm *entity.RepositoryPermission) error
 }
 
 func NewRepositoryPermissionManager(
@@ -106,4 +107,8 @@ func (receiver *repositoryPermission) GetUserPermission(ctx context.Context, rep
 
 func (receiver *repositoryPermission) Delete(ctx context.Context, perm *entity.RepositoryPermission) error {
 	return receiver.repositoryPermissionRepository.Delete(ctx, repo.WithWhere("id = ?", perm.ID))
+}
+
+func (receiver *repositoryPermission) Update(ctx context.Context, perm *entity.RepositoryPermission) error {
+	return receiver.repositoryPermissionRepository.Update(ctx, perm)
 }

@@ -26,7 +26,7 @@ func Router(
 		router.Post("/{repoID}", controller.CreateRepositoryPermission)
 		router.Get("/{repoID}/{userID}", controller.GetUserRepositoryPermission)
 		router.Delete("/{repoID}/{userID}", controller.DeleteUserRepositoryPermission)
-		//router.Patch("/{repoID}/{userID}", controller.UpdateUserRepositoryPermission)
+		router.Patch("/{repoID}/{userID}", controller.UpdateUserRepositoryPermission)
 	})
 
 	return data.AsMountableRouter("permissions", router)
