@@ -1,5 +1,5 @@
 package dto
 
-type CreateOrganizationRequest struct {
+type CreateOrUpdateOrganizationRequest struct {
 	Name string `json:"name"`
 }

@@ -12,7 +12,7 @@ import (
 
 func (receiver *Controller) Create(writer http.ResponseWriter, request *http.Request) {
 	defer request.Body.Close()
-	body, err := apphttp.ParseBody[dto.CreateOrganizationRequest](request.Body)
+	body, err := apphttp.ParseBody[dto.CreateOrUpdateOrganizationRequest](request.Body)
 	if err != nil {
 		receiver.logger.Info("unable to parse body", zap.Error(err))
 		receiver.writer.WriteErrorResponse(

@@ -17,6 +17,7 @@ type Organization interface {
 	Create(ctx context.Context, organization *entity.Organization) error
 	FindByID(ctx context.Context, organizationID uuid.UUID) (*entity.Organization, error)
 	GetForUser(ctx context.Context, userID uuid.UUID) ([]*entity.Organization, error)
+	Update(ctx context.Context, org *entity.Organization) error
 }
 
 func NewOrganizationManager(
@@ -56,4 +57,8 @@ func (receiver *organization) GetForUser(ctx context.Context, userID uuid.UUID) 
 		repo.WithWhere("om.user_id = ?", userID),
 		repo.WithWhere("om.approved = true"),
 	)
+}
+
+func (receiver *organization) Update(ctx context.Context, org *entity.Organization) error {
+	return receiver.organizationRepository.Update(ctx, org)
 }

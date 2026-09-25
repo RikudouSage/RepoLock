@@ -16,6 +16,7 @@ func Router(
 	router.Get("/", controller.ListOrgs)
 	router.Post("/", controller.Create)
 	router.Get("/{id}", controller.GetOrg)
+	router.Patch("/{id}", controller.UpdateOrg)
 
 	return data.AsMountableRouter("/org", router)
 }
