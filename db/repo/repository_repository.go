@@ -39,15 +39,13 @@ func (receiver *repositoryRepository) FindForUser(ctx context.Context, user *ent
 	database := receiver.getQueryIssuer(ctx)
 
 	options = append([]FindOption{
+		WithSelect([]string{"r.*"}),
+		WithAlias("r"),
+		WithJoin("organization_memberships om", "om.organization_id = r.organization_id"),
 		WithWhere("om.user_id = ?", user.ID),
-		WithSkipAutoTableName(true),
 	}, options...)
 
-	query := `select r.*
-				from repositories r
-				join organization_memberships om
-					on om.organization_id = r.organization_id`
-	query, bind := receiver.createQuery(query, options)
+	query, bind := receiver.createQuery(queryTypeSelect, options)
 	query = receiver.queryFormatter.FormatQuery(query)
 
 	rows, err := database.QueryContext(ctx, query, bind...)

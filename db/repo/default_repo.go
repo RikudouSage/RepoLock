@@ -14,6 +14,13 @@ import (
 	"go.chrastecky.dev/repolock/db"
 )
 
+type queryType string
+
+const (
+	queryTypeSelect queryType = "select"
+	queryTypeDelete queryType = "delete"
+)
+
 type DefaultRepository[TEntity any] interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*TEntity, error)
 	Find(ctx context.Context, options ...FindOption) ([]*TEntity, error)
@@ -65,7 +72,7 @@ func (receiver *defaultRepository[TEntity]) Find(ctx context.Context, options ..
 	database := receiver.getQueryIssuer(ctx)
 
 	result := make([]*TEntity, 0)
-	query, bind := receiver.createQuery("select * from", options)
+	query, bind := receiver.createQuery(queryTypeSelect, options)
 	query = receiver.queryFormatter.FormatQuery(query)
 	rows, err := database.QueryContext(ctx, query, bind...)
 	if err != nil {
@@ -211,7 +218,15 @@ func (receiver *defaultRepository[TEntity]) createID(entity *TEntity) error {
 	return nil
 }
 
-func (receiver *defaultRepository[TEntity]) createQuery(prefix string, options []FindOption) (query string, bind []any) {
+func (receiver *defaultRepository[TEntity]) createQuery(queryType queryType, options []FindOption) (query string, bind []any) {
+	var prefix string
+	switch queryType {
+	case queryTypeDelete:
+		prefix = "delete"
+	default:
+		prefix = "select"
+	}
+
 	optionsHolder := &findOptions{}
 	for _, option := range options {
 		option(optionsHolder)
@@ -219,9 +234,26 @@ func (receiver *defaultRepository[TEntity]) createQuery(prefix string, options [
 
 	var queryBuilder strings.Builder
 	queryBuilder.WriteString(prefix)
-	queryBuilder.WriteString(" ")
-	if !optionsHolder.skipAutoTableName {
-		queryBuilder.WriteString(receiver.tableName)
+	if queryType == queryTypeSelect {
+		if len(optionsHolder.selectFields) > 0 {
+			queryBuilder.WriteString(" " + strings.Join(optionsHolder.selectFields, ", ") + " ")
+		} else {
+			queryBuilder.WriteString(" * ")
+		}
+	}
+	queryBuilder.WriteString(" from ")
+	queryBuilder.WriteString(receiver.tableName)
+	if optionsHolder.tableAlias != "" {
+		queryBuilder.WriteString(" " + optionsHolder.tableAlias + " ")
+	}
+
+	if len(optionsHolder.joins) > 0 {
+		for table, on := range optionsHolder.joins {
+			queryBuilder.WriteString(" inner join ")
+			queryBuilder.WriteString(table)
+			queryBuilder.WriteString(" on ")
+			queryBuilder.WriteString(on)
+		}
 	}
 
 	if len(optionsHolder.where) != 0 {

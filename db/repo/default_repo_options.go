@@ -1,12 +1,14 @@
 package repo
 
 type findOptions struct {
-	where             []string
-	limit             uint
-	orderByField      string
-	orderByDirection  string
-	bindValues        []any
-	skipAutoTableName bool
+	selectFields     []string
+	where            []string
+	limit            uint
+	orderByField     string
+	orderByDirection string
+	bindValues       []any
+	joins            map[string]string
+	tableAlias       string
 }
 
 type FindOption func(*findOptions)
@@ -31,8 +33,23 @@ func WithOrderBy(column, direction string) FindOption {
 	}
 }
 
-func WithSkipAutoTableName(skip bool) FindOption {
+func WithJoin(table, on string) FindOption {
 	return func(options *findOptions) {
-		options.skipAutoTableName = skip
+		if options.joins == nil {
+			options.joins = make(map[string]string)
+		}
+		options.joins[table] = on
+	}
+}
+
+func WithSelect(fields []string) FindOption {
+	return func(options *findOptions) {
+		options.selectFields = fields
+	}
+}
+
+func WithAlias(alias string) FindOption {
+	return func(options *findOptions) {
+		options.tableAlias = alias
 	}
 }
