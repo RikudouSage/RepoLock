@@ -23,6 +23,11 @@ func (receiver *Controller) DeleteByIdentity(writer http.ResponseWriter, request
 		return
 	}
 
+	if identity == nil {
+		receiver.writer.WriteNotFound(request, writer)
+		return
+	}
+
 	if err = receiver.identityManager.Delete(request.Context(), identity); err != nil {
 		receiver.writer.WriteErrorResponse(err, writer)
 		return
@@ -45,6 +50,11 @@ func (receiver *Controller) DeleteByID(writer http.ResponseWriter, request *http
 	identity, err := receiver.identityManager.GetForUserByID(request.Context(), identityID, user.ID)
 	if err != nil {
 		receiver.writer.WriteErrorResponse(err, writer)
+		return
+	}
+
+	if identity == nil {
+		receiver.writer.WriteNotFound(request, writer)
 		return
 	}
 
